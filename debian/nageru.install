@@ -1,0 +1,7 @@
+/usr/bin/nageru
+/usr/bin/kaeru
+/usr/share/nageru/akai_midimix.midimapping
+/usr/share/nageru/*.jpeg
+/usr/share/nageru/*.lua
+/usr/lib/nageru/*
+

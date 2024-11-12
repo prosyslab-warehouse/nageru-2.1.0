@@ -1,0 +1,625 @@
+Nageru and Futatabi 2.1.0, February 6th, 2022
+
+  - Support unsynchronized HDMI/SDI output.
+    
+    This is for if you want just a monitor output without synchronizing
+    your entire stream chain to the output card (ie., you want to keep
+    some other camera as the master). Sound support is untested, and is
+    probably going to crackle a fair bit.
+    
+    There's no GUI support for changing this currently (you enable it
+    by using --output-card-unsynchronized and then using HDMI/SDI output
+    as usual).
+
+  - Support sending a separate x264 encode to disk
+    (--separate-x264-disk-encode and associated --x264-separate-disk-*
+    flags).
+    
+    This is useful for machines that don't have Quick Sync, but where
+    you want to have an archival copy on disk in higher quality
+    than what you streamed out.
+
+  - Fix compilation issues with FFmpeg 5.0.
+
+
+Nageru and Futatabi 2.0.2, September 3rd, 2021
+
+  - Fix issues with various upstream software:
+    DeckLink 11.7 (and newer) drivers, FFmpeg 4.4, newer CEF.
+
+  - Add a --no-transcode-video flag to Kaeru.
+    
+    This is useful primarily if you want Kaeru to rewrap the stream into
+    Metacube (for Cubemap) and do nothing else with it. Only H.264
+    is supported for now, since everything else assumes that.
+
+
+Nageru and Futatabi 2.0.1, July 9th, 2020
+
+  - Upgrade DeckLink SDK to 10.11.4.
+
+  - Various bugfixes.
+
+
+Nageru and Futatabi 2.0.0, June 2nd, 2020
+
+  - Native support for SRT inputs; by default, Nageru will listen
+    for incoming connections on port 9710 and treat them as hotplugged
+    cameras. They do not need any special handling in the theme,
+    and can pick up e.g. the SRT stream ID to be used in the UI.
+    They generally have fewer limitations than using an srt:// URL
+    on an FFmpeg capture; e.g., there is no forced scaling, and they
+    can be used as master clock (although this is not generally
+    recommended).
+
+    For license reaseons, please be sure that libsrt does not link to
+    OpenSSL when building Nageru.
+
+  - You do no longer need to set up a fixed amount of capture cards
+    at startup; by default, at least two will be created for you
+    (fake capture cards) as before, but if you have more, or hotplug
+    more, more slots will be automatically available, and will go
+    away (not take up any resources like fake capture cards do)
+    when unplugged. If you wish to artificially limit the maximum
+    number of cards like before, you can use the new switch
+    --max-num-cards.
+
+  - MJPEG handling now includes 4:2:0 support in both Nageru and
+    Futatabi, as SRT inputs are often 4:2:0 and not 4:2:2.
+
+  - FFmpeg capture cards (including SRT cards) now use VA-API
+    hardware acceleration for decoding whenever available.
+
+
+Nageru and Futatabi 1.9.3, April 12th, 2020
+
+  - Support (video-only) V4L2 output. The intended use case is output into
+    v4l2loopback to get into videoconferencing or the likes:
+
+     sudo apt install v4l2loopback-dkms
+     sudo modprobe v4l2loopback video_nr=2 card_label='Nageru loopback' max_width=1280 max_height=720 exclusive_caps=1
+     nageru --v4l-output /dev/video2
+
+   Start Nageru before any readers.
+
+
+Nageru and Futatabi 1.9.2, March 29th, 2020
+
+  - Support handling white balance directly in Nageru, without themes
+    manually inserting a WhiteBalanceEffect or handling set_wb().
+    To use it, call scene:add_white_balance() instead of
+    scene:add_effect(WhiteBalanceEffect.new()). If using this functionality,
+    white balance will be properly propagated to the MJPEG feed and
+    through Futatabi, so that replays get the correct white balance.
+    Futatabi's UI will still be uncorrected, though.
+
+  - Make it possible to siphon out a single MJPEG stream, for remote
+    debugging, single-camera recording, single-camera streaming via
+    Kaeru or probably other things. The URL for this is /feeds/N.mp4
+    where N is the card index (starting from zero).
+
+  - The theme can now access some audio settings; it can get (not set)
+    number of buses and names, get/set fader volume, get/set mute,
+    and get/set EQ parameters.
+
+  - In Futatabi, it is now possible to set custom source labels, with
+    the parameter --source-label NUM:LABEL (or -l NUM:LABEL).
+
+  - When the playback speed changes in Futatabi, ease into the new speed.
+    The easing period is nominally 200 ms, but it will be automatically
+    shortened or lengthened (up to as much as two seconds in extreme
+    cases, especially involving very slight speed change) if this
+    helps getting back into a cadence of hitting the original frames.
+    This can mean significant performance improvements when ramping
+    from higher speeds back into 100%.
+
+  - Updates for newer versions of CEF (tested with Chrome 80).
+
+  - Various bugfixes and performance improvements.
+
+
+Nageru and Futatabi 1.9.1, November 17th, 2019
+
+  - Support disabling optional effects if a given other effect is _enabled_
+    (typically for mutually exclusive effects).
+    
+  - Make it possible for the theme to override the status line, by declaring
+    a function format_status_line() in the theme. Inspired by a C++ patch by
+    Alex Thomazo in the Breizhcamp repository.
+
+  - Various bugfixes.
+
+
+Nageru and Futatabi 1.9.0, July 20th, 2019
+
+  - Significant reworking of the theme engine: Chains (now called scenes)
+    can now instantiate different versions behind-the-scenes instead of the
+    user having to worry about input types, low/high quality, or replacing
+    effects with others. Menus can have submenus and checkboxes. Finally, some
+    callbacks, such as num_channels(), have been replaced with easier-to-use
+    imperative functions, ie., an explicit call to Nageru.set_num_channels(N).
+
+    See the documentation for more information, or the included themes,
+    which have been ported to the new interfaces. Existing themes will continue
+    to run without modification, but the old interfaces are deprecated.
+
+    Martin Sandsmark contributed a bugfix to this work.
+
+  - Support cross-compilation. Patch from Helmut Grohne.
+
+  - Kaeru now has a parameter --disable-audio for transcoding streams
+    with no audio.
+
+  - Various bugfixes. In particular, work around an issue where Mesa's shader
+    cache interacts with Qt's EGL support to create a confusing crash with
+    “vertex shader lacks `main'”.
+
+
+Nageru and Futatabi 1.8.6, April 19th, 2019
+
+  - Filenames for the recordings are now without colons; it caused
+    too much problems with various software, including most players.
+
+  - Various bugfixes.
+
+
+Nageru and Futatabi 1.8.5, March 30th, 2019
+
+  - Experimental support for audio in Futatabi: The MJPEG export from
+    Nageru now supports audio, and Futatabi will store it and play it
+    back. Audio is currently only supported when playing at 100% speed
+    (no pitch shift or time stretching), and there is no audio output
+    to the Futatabi operator.
+
+  - Significant optimizations to MJPEG encoding, both when in use and when
+    not in use.
+
+  - Various bugfixes.
+
+
+Nageru and Futatabi 1.8.4, March 11th, 2019
+
+  - Various bugfixes, in particular for 32-bit platforms.
+
+
+Nageru and Futatabi 1.8.3, March 10th, 2019
+
+  - Allow controlling video mixing from MIDI events. Adapted from a patch
+    by Yann Dubreuil, from the BreizhCamp repository.
+
+  - Use ALSA hardware timestamps for input; gives more stable delay.
+    Patch by Yann Dubreuil, from the BreizhCamp repository.
+
+  - For FFmpeg inputs, add an option for playing as fast as possible
+    (set rate >= 10.0).
+
+  - In Futatabi, support queueing and playing clips with no cue-out point.
+    This opens up for new and even faster UI workflows.
+
+  - Many bugfixes.
+
+
+Nageru and Futatabi 1.8.2, January 19th, 2019
+
+  - Futatabi now supports MIDI controllers like Nageru, including an editor
+    and a sample mapping for the Behringer CMD PL-1.
+
+  - Futatabi now supports changing master speed during play, both via a
+    MIDI controller and the GUI.
+
+  - Various bugfixes.
+
+
+Nageru and Futatabi 1.8.1, December 30th, 2018
+
+  - Futatabi can now communicate its queue status through a subtitle track,
+    and Nageru can consume it. This allows Nageru themes to get precise
+    information programmatically, e.g. to show status or automatically
+    switch away when the queue is about to end.
+
+  - Futatabi can now reuse the computed flow across successive frames when
+    interpolating between the same frame pair. This significantly reduces
+    the GPU load when doing super-slow motion (slower than 0.5x).
+
+  - Various smaller fixes.
+
+
+Nageru and Futatabi 1.8.0, December 20th, 2018
+
+  - Initial release of Futatabi, a multicamera slow motion video server
+    designed to be used with Nageru. Futatabi is currently in alpha stage
+    and largely undocumented.
+
+  - Add support for multi-camera export from Nageru. A multi-camera stream
+    contains all frames from all camera inputs (unless overridden by
+    --mjpeg-export-cards), unprocessed except for MJPEG encoding.
+    MJPEG encoding is done in hardware (via VA-API) on Skylake or newer,
+    or using libjpeg otherwise. The intended user of this stream is Futatabi.
+
+
+Nageru 1.7.5, November 11th, 2018
+
+  - Fix a bug where --record-x264-video would not work when VA-API was
+    not present, making the option rather useless (broken in 1.7.2).
+    Bug reported by Peter De Schrijver.
+
+  - The build system has been switched to Meson; see the README for new
+    build instructions.
+
+  - Various smaller fixes.
+
+
+Nageru 1.7.4, August 31st, 2018
+
+  - Rework the x264 speedcontrol presets, again. (They earlier assumed
+    we could control B-frame settings on the fly, which we cannot with
+    threaded lookahead.) Also support x264 >= 153, which can support
+    multiple bit depths in the same library.
+
+  - Default to SDI inputs instead of HDMI.
+
+  - Add a mode to run in full screen (--fullscreen). Adapted from a patch
+    by Yoann Dubreuil.
+
+  - Add support for lift/gamma/gain in the theme. Patch by Alexandre Thomazo.
+
+
+Nageru 1.7.3, May 22nd, 2018
+
+  - When using multichannel audio, add a control for adjusting the
+    stereo width (from normal stereo to mono, all the way to
+    inverted stereo).
+
+  - Removed --http-coarse-timebase (it is now always on).
+
+  - Various bugfixes.
+
+
+Nageru 1.7.2, April 28th, 2018
+
+  - Several improvements to video (FFmpeg) inputs: You can now use
+    them as audio sources, you can right-click on video channels
+    to change URL/filename on-the-fly, themes can ask for forced
+    disconnection (useful for network sources that are hanging),
+    and various other improvements. Be aware that the audio support
+    may still be somewhat rough, as A/V sync of arbitrary video
+    playout is a hard problem.
+
+  - The included themes have been fixed to properly make the returned
+    chain preparation functions independent of global state (e.g. if
+    the white balance for a channel was changed before the frame was
+    actually rendered). If you are using a custom theme, you may want
+    to apply similar fixes to it.
+
+  - In Metacube stream output, mark each keyframe with a pts metadata
+    block. This allows Cubemap 1.4.0 or newer to serve fMP4 fragments
+    for HLS from Nageru's output, without any further remuxing or
+    transcoding.
+
+  - If needed, Nageru will now automatically try to autodetect a
+    usable --va-display parameter by probing all DRM nodes for H.264
+    encoders. This removes the need to set --va-display in almost all
+    cases, and also removes the dependency on libpci.
+
+  - For GPUs that support querying available memory (in practice only
+    NVIDIA GPUs at the current time), expose the amount of used/total
+    GPU memory both on standard output and in the Prometheus metrics
+    (as well as included Grafana dashboard).
+
+  - The Grafana dashboard now supports heatmaps for the chosen x264
+    speedcontrol preset (requires Grafana 5.1 or newer). (There used to
+    be a heatmap earlier, but it was all broken.)
+
+  - Various bugfixes.
+
+
+Nageru 1.7.1, March 26th, 2018
+
+  - Various bugfixes, mostly related to HTML and video inputs.
+
+
+Nageru 1.7.0, March 8th, 2018
+
+  - Support for HTML5 graphics directly in Nageru, through CEF
+    (Chromium Embedded Framework). This performs better and is more
+    flexible than integrating with CasparCG over a socket. Note that
+    CEF is an optional component; see the documentation for more
+    information.
+
+  - Add an HTTP endpoint for enumerating channels and one for getting
+    only their colors. Intended for remote tally applications;
+    set the documentation.
+
+  - Add a video grid display that removes the audio controls and shows
+    the video channels only, potentially in multiple rows if that makes
+    for a larger viewing area.
+
+  - Themes can now present simple menus in the Nageru UI. See the
+    documentation for more information.
+
+  - Various bugfixes.
+
+
+Nageru 1.6.4, January 25th, 2018
+
+  - Fix compilation with the upcoming FFmpeg 3.5.
+
+  - Switch to LuaJIT for the theme engine, which is faster.
+
+  - Various bugfixes and smaller optimizations.
+
+
+Nageru 1.6.3, November 8th, 2017
+
+  - Add quick-cut keys (Q, W, E, etc.) below the preview keys.
+    Since it's easy to hit these by accident and put up a signal
+    you didn't want, they are disabled by default (they can be
+    enabled in the video menu, or with the command line flag
+    --quick-cut-keys).
+
+  - Rework the x264 speedcontrol presets to better match newer
+    x264 versions.
+
+  - Add an option for changing the HTTP port (--http-port).
+
+  - Various smaller bug and integration fixes.
+
+
+Nageru 1.6.2, July 16th, 2017
+
+  - Various smaller Kaeru fixes, mostly around metrics. Also,
+    you can now adjust the x264 bitrate in Kaeru (in 100 kbit/sec
+    increments) by sending SIGUSR1 (higher) or SIGUSR2 (lower).
+
+
+Nageru 1.6.1, July 9th, 2017
+
+  - Add native export of Prometheus metrics.
+
+  - Rework the frame queue drop algorithm. The new one should handle tricky
+    situations much better, especially when a card is drifting very slowly
+    against the master timer.
+
+  - Add Kaeru, an experimental transcoding tool based on Nageru code.
+    Kaeru can run headless on a server without a GPU to transcode a
+    Nageru stream into a lower-bitrate one, replacing VLC.
+
+  - Work around a bug in some versions of NVIDIA's OpenGL drivers that would
+    crash Nageru after about three hours (fix in cooperation with Movit).
+
+  - Fix a crash with i965-va-driver 1.8.x.
+
+  - Reduce mutex contention in certain critical places, causing lower tail
+    latency in the mixer.
+
+
+Nageru 1.6.0, May 29th, 2017
+
+  - Add support for having videos (from file or from URL) as a separate
+    input channels, albeit with some limitations. Apart from the obvious use of
+    looping pause clips or similar, this can be used to integrate with CasparCG;
+    see the manual for more details.
+
+  - Add a frame analyzer (accessible from the Video menu) containing an
+    RGB histogram and a color dropped tool. This is useful in calibrating
+    video chains by playing back a known signal. Note that this adds a
+    dependency on QCustomPlot.
+
+  - Allow overriding Y'CbCr input interpretation, for inputs that don't
+    use the correct settings. Also, Rec. 601 is now used by default instead
+    of Rec. 709 for SD resolutions.
+
+  - Support other sample rates than 48000 Hz from bmusb.
+
+
+Nageru 1.5.0, April 5th, 2017
+
+  - Support for low-latency HDMI/SDI output in addition to (or instead of) the
+    stream. This currently only works with DeckLink cards, not bmusb. See the
+    manual for more information.
+
+  - Support changing the resolution from the command line, instead of locking
+    everything to 1280x720.
+
+  - The A/V sync code has been rewritten to be more in line with Fons
+    Adriaensen's original paper. It handles several cases much better,
+    in particular when trying to match 59.94 and 60 Hz sources to each other.
+    However, it might occasionally need a few extra seconds on startup to
+    lock properly if startup is slow.
+
+  - Add support for using x264 for the disk recording. This makes it possible,
+    among other things, to run Nageru on a machine entirely without VA-API
+    support.
+
+  - Support for 10-bit Y'CbCr, both on input and output. (Output requires
+    x264 disk recording, as Quick Sync Video does not support 10-bit H.264.)
+    This requires compute shader support, and is in general a little bit
+    slower on input and output, due to the extra amount of data being shuffled
+    around. Intermediate precision is 16-bit floating-point or better,
+    as before.
+
+  - Enable input mode autodetection for DeckLink cards that support it.
+    (bmusb mode has always been autodetected.)
+
+  - Add functionality to add a time code to the stream; useful for debugging
+    latency.
+
+  - The live display is now both more performant and of higher image quality.
+
+  - Fix a long-standing issue where the preview displays would be too bright
+    when using an NVIDIA GPU. (This did not affect the finished stream.)
+
+  - Many other bugfixes and small improvements.
+
+
+Nageru 1.4.2, November 24th, 2016
+
+  - Fix a thread race that would sometimes cause x264 streaming to go awry.
+
+
+Nageru 1.4.1, November 6th, 2016
+
+  - Various bugfixes.
+
+
+Nageru 1.4.0, October 26th, 2016
+
+  - Support for multichannel (or more accurately, multi-bus) audio,
+    choosable from the UI or using the --multichannel command-line
+    flag. In multichannel mode, you can take in inputs from multiple
+    different sources (or different channels on the same source, for
+    multichannel sound cards), apply effects to them separately and then
+    mix them together. This includes both audio from the video cards
+    as well as ALSA inputs, including hotplug. Ola Gundelsby contributed
+    invaluable feedback on this feature throughout the entire
+    development cycle.
+
+  - Support for having MIDI controllers control various aspects of the
+    audio UI, with relatively flexible mapping. Note that different
+    MIDI controllers can vary significantly in what protocol they speak,
+    so Nageru will not necessarily work with all. (The primary testing
+    controller has been the Akai MIDImix, and a pre-made mapping for
+    that is included. The Korg nanoKONTROL2 has also been tested and
+    works, but it requires some Korg-specific SysEx commands to make
+    the buttons and lights work.)
+
+  - Add a disk space indicator to the main window.
+
+  - Various bugfixes. In particular, an issue where the audio would pitch
+    up sharply after a series of many dropped frames has been fixed.
+
+
+Nageru 1.3.4, August 2nd, 2016
+
+  - Various bugfixes.
+
+
+Nageru 1.3.3, July 27th, 2016
+
+  - Various changes to make distribution packaging easier; in particular,
+    theme data can be picked up from /usr/local/share/nageru.
+
+  - Fix various FFmpeg deprecation warnings, now that we need FFmpeg
+    3.1 for other reasons anyway.
+
+
+Nageru 1.3.2, July 23rd, 2016
+
+  - Allow limited hotplugging (unplugging and replugging) of USB cards.
+    You can use the new command-line option --num-fake-cards (-C) to add
+    fake cards that show only a single color and that will be replaced
+    by real cards as you plug them in; you can also unplug cards and have
+    them be replaced by fake cards. Fake cards can also be used for testing
+    Nageru without actually having any video cards available.
+
+  - Add Metacube timestamping of every keyframe, for easier detection of
+    streams not keeping up. Works with the new timestamp feature of
+    Cubemap 1.3.1. Will be ignored (save for some logging) in older
+    Cubemap versions.
+
+  - The included default theme has been reworked and cleaned up to be
+    more understandable and extensible.
+
+  - Add more command-line options for initial audio setup.
+
+
+Nageru 1.3.1, July 1st, 2016
+
+ - Various display bugfixes.
+
+
+Nageru 1.3.0, June 26th, 2016
+
+ - It is now possible, given enough CPU power (e.g., a quad-core Haswell or
+   faster desktop CPU), to output a stream that is suitable for streaming
+   directly to end users without further transcoding. In particular, this
+   includes support for encoding the network stream with x264 (the stream
+   saved to disk is still done using Quick Sync), for Metacube framing (for
+   streaming to the Cubemap reflector), and for choosing the network stream
+   mux. For more information, see the README.
+
+ - Add a flag (--disable-alsa-output) to disable ALSA monitoring output.
+
+ - Do texture uploads from the main thread instead of from separate threads;
+   may or may not improve stability with NVIDIA's proprietary drivers.
+
+ - When beginning a new video segment, the shutdown of the old encoder
+   is now done in a background thread, in order to not disturb the external
+   stream. The audio still goes into a somewhat random stream, though.
+
+ - You can now override the default stream-to-card mapping with --map-signal=
+   on the command line.
+
+ - Nageru now tries to lock itself into RAM if it has the permissions to do
+   so, for better realtime behavior. (Writing the stream to disk tends to
+   fill the buffer cache, eventually paging less-used parts of Nageru out.)
+
+ - Various fixes for deadlocks, memory leaks, and many other errors.
+
+
+Nageru 1.2.1, April 15th, 2016
+
+ - Images are now updated from disk about every second, so that it is possible
+   to update e.g. overlays during streaming, although somewhat slowly.
+
+ - Fix support for PNG images.
+
+ - You can now send SIGHUP to start a new cut instead of using the menu.
+
+ - Added a --help option.
+
+ - Various tweaks to OpenGL fence handling.
+
+
+Nageru 1.2.0, April 6th, 2016
+
+ - Support for Blackmagic's PCI and Thunderbolt cards, using the official
+   (closed-source) Blackmagic drivers. (You do not need the SDK installed, though.)
+   You can use PCI and USB cards pretty much interchangeably.
+
+ - Much more stable handling of frame queues on non-master cards. In particular,
+   you can have a master card on 50 Hz and another card on 60 Hz without getting
+   lots of warning messages and a 10+ frame latency on the second card.
+
+ - Many new options in the right click menu on cards: Adjustable video inputs,
+   adjustable audio inputs, adjustable resolutions, ability to select card for
+   master clock.
+
+ - Add support for starting with almost all audio processing turned off
+   (--flat-audio).
+
+ - The UI now marks inputs with red or green to mark them as participating in
+   the live or preview signal, respectively. Red takes priority. (Actually,
+   it merely asks the theme for a color for each input; the theme contains
+   the logic.)
+
+ - Add support for uncompressed video instead of H.264 on the HTTP server,
+   while still storing H.264 to files (--http-uncompressed-video). Note that
+   depending on your client, this might not actually be more CPU efficient
+   even on localhost, so be sure to check.
+
+ - Add a simpler, less featureful theme (simple.lua) that should be easier to
+   understand for beginners. Themes are now also choosable with -t on the command
+   line.
+
+ - Too many bugfixes and small tweaks to list. In particular, many memory leaks
+   in the streaming part have been identified and fixed.
+
+
+Nageru 1.1.0, February 24th, 2016
+
+ - Support doing the H.264 encoding on a different graphics device from the one
+   doing the mixing. In particular, this makes it possible to use Nageru on an
+   NVIDIA GPU while still encoding H.264 video using Intel Quick Sync (NVENC
+   is not supported yet) -- it is less efficient since the data needs to be read
+   back via the CPU, but the NVIDIA cards and drivers are so much faster that it
+   doesn't really matter. Tested on a GTX 950 with the proprietary drivers.
+
+ - In the included example theme, fix fading to/from deinterlaced sources.
+
+ - Various smaller compilation, distribution and documentation fixes.
+
+
+Nageru 1.0.0, January 30th, 2016
+
+ - Initial release.

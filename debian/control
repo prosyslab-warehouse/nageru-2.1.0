@@ -1,0 +1,35 @@
+Source: nageru
+Section: video
+Priority: optional
+Maintainer: Steinar H. Gunderson <sesse@debian.org>
+Build-Depends: debhelper (>= 13), qtbase5-dev, libqt5opengl5-dev, pkg-config, libusb-1.0-0-dev, libmovit-dev (>= 1.5.2), libmicrohttpd-dev, libx264-dev, libavcodec-dev, libavformat-dev (>= 7:3.1), libswscale-dev, libva-dev, libswresample-dev, libegl1-mesa-dev, libasound2-dev, libzita-resampler-dev, libluajit-5.1-dev, libbmusb-dev (>= 0.7.4), protobuf-compiler, libprotobuf-dev, libqcustomplot-dev, meson (>= 0.47), libjpeg-dev, libsqlite3-dev, libdrm-dev, libsrt-gnutls-dev
+Build-Conflicts: lld [i386]
+Standards-Version: 4.5.0
+Homepage: https://nageru.sesse.net/
+
+Package: nageru
+# Uses Linux-only features (such as VA-API).
+# Also needs LuaJIT (not to mention OpenGL and USB), which isn't available on s390x.
+Architecture: amd64 arm64 armel armhf i386 mips mips64el mipsel ppc64el
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: modern free software video mixer
+ Nageru (a pun on the Japanese verb nageru, meaning to throw or cast) is a live
+ video mixer. It takes in inputs from one or more video cards (any DeckLink PCI
+ card via Blackmagic's drivers, and Intensity Shuttle USB3 and UltraStudio SDI
+ USB3 cards via bmusb), mixes them together based on the operator's desire and a
+ theme written in Lua, and outputs a high-quality H.264 stream over TCP suitable
+ for further transcoding and/or distribution.
+ .
+ Nageru aims to produce high-quality output, both in terms of audio and video,  
+ while still running on modest hardware.
+
+Package: futatabi
+# Generally same reasoning as nageru.
+Architecture: amd64 arm64 armel armhf i386 mips mips64el mipsel ppc64el
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: multicamera slow motion video server
+ Futatabi is a video server and multitrack recorder, made to work in tandem
+ with Nageru. It can record multiple video tracks in sync and play back
+ selected clips from them in slow motion. Futatabi uses GPU-based interpolation
+ to provide smooth motion without the use of a high-speed camera (the quality
+ will depend on the type of content and on the speed of the GPU in use).
